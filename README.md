@@ -61,12 +61,47 @@ A comprehensive automation toolkit for authorized phishing assessments during pe
 - Credential logging and encryption
 - Audit trail for compliance
 
+## 🖥️ Web Interface
+
+**NEW!** Access all features through a modern web-based dashboard:
+
+```bash
+# Start the web server
+python start_web.py
+
+# Access at: http://localhost:5000
+```
+
+**Features:**
+- 📊 Real-time campaign dashboard
+- 🎯 Visual campaign management
+- 🌐 Interactive domain checker
+- ✉️ Email template generator with preview
+- 📄 Landing page cloner interface
+- 🔒 SSL certificate manager
+
+See [WEB_INTERFACE_GUIDE.md](WEB_INTERFACE_GUIDE.md) for detailed documentation.
+
 ## 🚀 Quick Start
+
+### Option 1: Web Interface (Recommended)
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start web server
+python start_web.py
+
+# Open browser to http://localhost:5000
+```
+
+### Option 2: Command Line Interface
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/phishing-automation-tool.git
-cd phishing-automation-tool
+git clone https://github.com/connsigliere/PAT.git
+cd PAT
 
 # Install dependencies
 pip install -r requirements.txt
@@ -75,8 +110,8 @@ pip install -r requirements.txt
 cp config/config.example.yml config/config.yml
 # Edit config.yml with your settings
 
-# Run the application
-python src/main.py
+# Run CLI commands
+python src/main.py --help
 ```
 
 ## 📚 Documentation

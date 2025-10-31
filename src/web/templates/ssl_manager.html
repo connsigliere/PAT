@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}SSL Manager - Phishing Automation Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <h1 class="mb-4"><i class="bi bi-lock"></i> SSL Certificate Manager</h1>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header"><i class="bi bi-plus-circle"></i> Obtain New Certificate</div>
+                    <div class="card-body">
+                        <form id="obtainCertForm">
+                            <div class="mb-3">
+                                <label class="form-label">Domain</label>
+                                <input type="text" class="form-control" name="domain" placeholder="example.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" placeholder="admin@example.com" required>
+                                <small class="form-text text-muted">For Let's Encrypt notifications</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Method</label>
+                                <select class="form-select" name="method">
+                                    <option value="standalone">Standalone (port 80)</option>
+                                    <option value="webroot">Webroot</option>
+                                    <option value="dns">DNS Challenge</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-download"></i> Obtain Certificate
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header"><i class="bi bi-list"></i> Installed Certificates</div>
+                    <div class="card-body">
+                        <div id="certificatesList">
+                            <button class="btn btn-outline-primary w-100" onclick="loadCertificates()">
+                                <i class="bi bi-arrow-clockwise"></i> Load Certificates
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            <strong>Note:</strong> Certbot must be installed on your system to use this feature.
+            This requires root/sudo privileges.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('obtainCertForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {
+        domain: formData.get('domain'),
+        email: formData.get('email'),
+        method: formData.get('method')
+    };
+
+    try {
+        const response = await axios.post('/api/ssl/obtain', data);
+        const result = response.data.result;
+
+        if (result.success) {
+            utils.showToast('Certificate obtained successfully!', 'success');
+            loadCertificates();
+        } else {
+            utils.showToast('Failed: ' + result.error, 'danger');
+        }
+    } catch (error) {
+        utils.showToast('Failed to obtain certificate', 'danger');
+    }
+});
+
+async function loadCertificates() {
+    const container = document.getElementById('certificatesList');
+    container.innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
+
+    try {
+        const response = await axios.get('/api/ssl/certificates');
+        const certs = response.data.certificates;
+
+        if (certs.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No certificates found</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="list-group">
+                ${certs.map(cert => `
+                    <div class="list-group-item">
+                        <h6>${cert.name}</h6>
+                        <small class="text-muted">${cert.domains}</small><br>
+                        <small><strong>Expires:</strong> ${cert.expiry}</small>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (error) {
+        container.innerHTML = '<p class="text-danger">Failed to load certificates</p>';
+    }
+}
+</script>
+{% endblock %}

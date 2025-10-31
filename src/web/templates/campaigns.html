@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}Campaign Management - Phishing Automation Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-bullseye"></i> Campaign Management</h1>
+            <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#createCampaignModal">
+                <i class="bi bi-plus-circle"></i> New Campaign
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<ul class="nav nav-tabs mb-4" id="campaignTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-filter="" type="button">
+            All Campaigns
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="active-tab" data-bs-toggle="tab" data-filter="active" type="button">
+            Active
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="draft-tab" data-bs-toggle="tab" data-filter="draft" type="button">
+            Draft
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-filter="completed" type="button">
+            Completed
+        </button>
+    </li>
+</ul>
+
+<!-- Campaigns List -->
+<div class="row" id="campaigns-container">
+    <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Create Campaign Modal -->
+<div class="modal fade" id="createCampaignModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Create New Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createCampaignForm">
+                    <div class="mb-3">
+                        <label class="form-label">Campaign Name *</label>
+                        <input type="text" class="form-control" name="name" required
+                               placeholder="e.g., Q1 2024 Security Assessment">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description *</label>
+                        <textarea class="form-control" name="description" rows="2" required
+                                  placeholder="Brief description of the campaign objectives"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email Template *</label>
+                        <select class="form-select" name="template_type" required>
+                            <option value="">Select template...</option>
+                            <option value="it_support">IT Support - Password Reset</option>
+                            <option value="hr_notification">HR - Benefits Enrollment</option>
+                            <option value="executive_impersonation">Executive Impersonation</option>
+                            <option value="document_share">Document Share</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Target Domain *</label>
+                        <input type="text" class="form-control" name="target_domain" required
+                               placeholder="e.g., example.com">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Phishing URL *</label>
+                        <input type="url" class="form-control" name="phishing_url" required
+                               placeholder="https://your-phishing-domain.com">
+                        <div class="form-text">The URL where victims will be redirected</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createCampaign()">
+                    <i class="bi bi-check-circle"></i> Create Campaign
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Details Modal -->
+<div class="modal fade" id="campaignDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="campaignDetailsTitle">Campaign Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="campaignDetailsBody">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentFilter = '';
+
+// Load campaigns
+async function loadCampaigns(status = '') {
+    try {
+        const url = status ? `/api/campaigns?status=${status}` : '/api/campaigns';
+        const response = await axios.get(url);
+        const campaigns = response.data.campaigns;
+
+        const container = document.getElementById('campaigns-container');
+
+        if (campaigns.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No campaigns found</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = campaigns.map(campaign => {
+            const clickRate = campaign.emails_sent > 0
+                ? ((campaign.links_clicked / campaign.emails_sent) * 100).toFixed(1)
+                : '0.0';
+
+            const statusColors = {
+                'draft': 'secondary',
+                'active': 'success',
+                'paused': 'warning',
+                'completed': 'info'
+            };
+
+            return `
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 campaign-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title mb-0">${campaign.name}</h5>
+                                <span class="badge bg-${statusColors[campaign.status]}">${campaign.status}</span>
+                            </div>
+                            <p class="card-text text-muted small">${campaign.description}</p>
+
+                            <div class="campaign-stats mt-3">
+                                <div class="row text-center">
+                                    <div class="col-6 mb-2">
+                                        <small class="text-muted d-block">Targets</small>
+                                        <strong>${campaign.targets_count}</strong>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <small class="text-muted d-block">Sent</small>
+                                        <strong>${campaign.emails_sent}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Clicked</small>
+                                        <strong>${campaign.links_clicked}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Click Rate</small>
+                                        <strong class="text-primary">${clickRate}%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="btn-group w-100" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewCampaign('${campaign.id}')">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                                ${campaign.status === 'draft' ? `
+                                    <button class="btn btn-sm btn-outline-success" onclick="startCampaign('${campaign.id}')">
+                                        <i class="bi bi-play"></i> Start
+                                    </button>
+                                ` : ''}
+                                ${campaign.status === 'active' ? `
+                                    <button class="btn btn-sm btn-outline-warning" onclick="pauseCampaign('${campaign.id}')">
+                                        <i class="bi bi-pause"></i> Pause
+                                    </button>
+                                ` : ''}
+                                ${campaign.status !== 'completed' ? `
+                                    <button class="btn btn-sm btn-outline-info" onclick="completeCampaign('${campaign.id}')">
+                                        <i class="bi bi-check"></i> Complete
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading campaigns:', error);
+        showAlert('Failed to load campaigns', 'danger');
+    }
+}
+
+// Create campaign
+async function createCampaign() {
+    const form = document.getElementById('createCampaignForm');
+    const formData = new FormData(form);
+
+    const data = {
+        name: formData.get('name'),
+        description: formData.get('description'),
+        template_type: formData.get('template_type'),
+        target_domain: formData.get('target_domain'),
+        phishing_url: formData.get('phishing_url')
+    };
+
+    try {
+        const response = await axios.post('/api/campaigns', data);
+
+        if (response.data.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createCampaignModal'));
+            modal.hide();
+            form.reset();
+            showAlert('Campaign created successfully!', 'success');
+            loadCampaigns(currentFilter);
+        }
+    } catch (error) {
+        console.error('Error creating campaign:', error);
+        showAlert('Failed to create campaign', 'danger');
+    }
+}
+
+// View campaign details
+async function viewCampaign(campaignId) {
+    const modal = new bootstrap.Modal(document.getElementById('campaignDetailsModal'));
+    modal.show();
+
+    try {
+        const response = await axios.get(`/api/campaigns/${campaignId}`);
+        const campaign = response.data.campaign;
+        const stats = response.data.statistics;
+
+        document.getElementById('campaignDetailsTitle').textContent = campaign.name;
+        document.getElementById('campaignDetailsBody').innerHTML = `
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6>Campaign Information</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>Status:</strong></td><td><span class="badge bg-primary">${campaign.status}</span></td></tr>
+                        <tr><td><strong>Template:</strong></td><td>${campaign.template_type}</td></tr>
+                        <tr><td><strong>Target Domain:</strong></td><td>${campaign.target_domain}</td></tr>
+                        <tr><td><strong>Phishing URL:</strong></td><td><a href="${campaign.phishing_url}" target="_blank">${campaign.phishing_url}</a></td></tr>
+                        <tr><td><strong>Created:</strong></td><td>${new Date(campaign.created_at).toLocaleString()}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>Statistics</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>Targets:</strong></td><td>${stats.targets}</td></tr>
+                        <tr><td><strong>Emails Sent:</strong></td><td>${stats.sent}</td></tr>
+                        <tr><td><strong>Opened:</strong></td><td>${stats.opened} (${stats.open_rate}%)</td></tr>
+                        <tr><td><strong>Clicked:</strong></td><td>${stats.clicked} (${stats.click_rate}%)</td></tr>
+                        <tr><td><strong>Credentials Captured:</strong></td><td>${stats.captured} (${stats.capture_rate}%)</td></tr>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <h6>Description</h6>
+                    <p>${campaign.description}</p>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading campaign details:', error);
+        showAlert('Failed to load campaign details', 'danger');
+    }
+}
+
+// Campaign actions
+async function startCampaign(campaignId) {
+    if (!confirm('Are you sure you want to start this campaign?')) return;
+
+    try {
+        await axios.post(`/api/campaigns/${campaignId}/start`);
+        showAlert('Campaign started successfully!', 'success');
+        loadCampaigns(currentFilter);
+    } catch (error) {
+        console.error('Error starting campaign:', error);
+        showAlert('Failed to start campaign', 'danger');
+    }
+}
+
+async function pauseCampaign(campaignId) {
+    try {
+        await axios.post(`/api/campaigns/${campaignId}/pause`);
+        showAlert('Campaign paused', 'info');
+        loadCampaigns(currentFilter);
+    } catch (error) {
+        console.error('Error pausing campaign:', error);
+        showAlert('Failed to pause campaign', 'danger');
+    }
+}
+
+async function completeCampaign(campaignId) {
+    if (!confirm('Mark this campaign as completed?')) return;
+
+    try {
+        await axios.post(`/api/campaigns/${campaignId}/complete`);
+        showAlert('Campaign completed', 'success');
+        loadCampaigns(currentFilter);
+    } catch (error) {
+        console.error('Error completing campaign:', error);
+        showAlert('Failed to complete campaign', 'danger');
+    }
+}
+
+// Show alert
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+
+    setTimeout(() => alertDiv.remove(), 5000);
+}
+
+// Filter tabs
+document.querySelectorAll('#campaignTabs button').forEach(button => {
+    button.addEventListener('click', function() {
+        currentFilter = this.dataset.filter || '';
+        loadCampaigns(currentFilter);
+    });
+});
+
+// Load campaigns on page load
+document.addEventListener('DOMContentLoaded', () => loadCampaigns());
+</script>
+{% endblock %}

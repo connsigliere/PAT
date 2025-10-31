@@ -1,0 +1,235 @@
+/* Phishing Automation Tool - Custom Styles */
+
+:root {
+    --primary-color: #0d6efd;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --dark-color: #212529;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Navigation */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    transition: color 0.2s;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link.active {
+    color: #fff;
+}
+
+/* Cards */
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 2px solid #f0f0f0;
+    font-weight: 600;
+}
+
+/* Stat Cards */
+.stat-card {
+    border-radius: 12px;
+    border: none;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.3;
+}
+
+/* Campaign Cards */
+.campaign-card {
+    border-left: 4px solid var(--primary-color);
+}
+
+.campaign-stats {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Buttons */
+.btn {
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+}
+
+/* Forms */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* Tables */
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.8em;
+}
+
+/* Loading States */
+.spinner-border {
+    animation: spinner-border 0.75s linear infinite;
+}
+
+/* Progress Bars */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 0.5rem;
+}
+
+/* Modals */
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.modal-footer {
+    border-top: 2px solid #f0f0f0;
+}
+
+/* Footer */
+.footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Custom Alerts */
+.alert {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Tabs */
+.nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    color: var(--primary-color);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
+}
+
+/* Code Block */
+.code-block {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+
+    .navbar-brand {
+        font-size: 1rem;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

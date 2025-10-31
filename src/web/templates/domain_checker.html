@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Domain Checker - Phishing Automation Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="mb-4">
+            <i class="bi bi-globe"></i> Domain Reputation Checker
+        </h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="domainCheckForm">
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control" id="domainInput"
+                               placeholder="Enter domain (e.g., example.com)" required>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i> Check Domain
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="resultsContainer" style="display: none;">
+            <!-- Reputation Score -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Reputation Score</h5>
+                    <div class="display-1 fw-bold" id="reputationScore">-</div>
+                    <p class="text-muted">out of 100</p>
+                    <div class="progress" style="height: 10px;">
+                        <div id="reputationBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check Results -->
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <i class="bi bi-dns"></i> DNS Records
+                        </div>
+                        <div class="card-body" id="dnsResults">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <i class="bi bi-info-circle"></i> WHOIS Information
+                        </div>
+                        <div class="card-body" id="whoisResults">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <i class="bi bi-shield-check"></i> Email Configuration
+                        </div>
+                        <div class="card-body" id="emailResults">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <i class="bi bi-lock"></i> SSL Certificate
+                        </div>
+                        <div class="card-body" id="sslResults">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-list-check"></i> Blacklist Status
+                        </div>
+                        <div class="card-body" id="blacklistResults">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12" id="issuesCard" style="display: none;">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <i class="bi bi-exclamation-triangle"></i> Issues Found
+                        </div>
+                        <div class="card-body">
+                            <ul id="issuesList" class="mb-0"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingIndicator" style="display: none;" class="text-center py-5">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Checking domain...</span>
+            </div>
+            <p class="mt-3 text-muted">Analyzing domain...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('domainCheckForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const domain = document.getElementById('domainInput').value.trim();
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    // Show loading
+    resultsContainer.style.display = 'none';
+    loadingIndicator.style.display = 'block';
+
+    try {
+        const response = await axios.post('/api/domain/check', { domain });
+        const result = response.data.result;
+
+        // Hide loading
+        loadingIndicator.style.display = 'none';
+        resultsContainer.style.display = 'block';
+
+        // Display reputation score
+        const score = result.reputation_score;
+        document.getElementById('reputationScore').textContent = score;
+
+        const scoreBar = document.getElementById('reputationBar');
+        scoreBar.style.width = score + '%';
+        scoreBar.className = 'progress-bar ' + (
+            score >= 80 ? 'bg-success' :
+            score >= 60 ? 'bg-info' :
+            score >= 40 ? 'bg-warning' :
+            'bg-danger'
+        );
+
+        // DNS Results
+        document.getElementById('dnsResults').innerHTML = `
+            <p><strong>Has Records:</strong> ${result.dns.has_records ? '✅ Yes' : '❌ No'}</p>
+            <p><strong>A Records:</strong> ${result.dns.A.length}</p>
+            <p><strong>MX Records:</strong> ${result.dns.MX.length}</p>
+            <p><strong>NS Records:</strong> ${result.dns.NS.length}</p>
+        `;
+
+        // WHOIS Results
+        const age = result.whois.age_days ? `${result.whois.age_days} days` : 'Unknown';
+        document.getElementById('whoisResults').innerHTML = `
+            <p><strong>Registered:</strong> ${result.whois.registered ? '✅ Yes' : '❌ No'}</p>
+            <p><strong>Domain Age:</strong> ${age}</p>
+            <p><strong>Registrar:</strong> ${result.whois.registrar || 'Unknown'}</p>
+            <p><strong>Creation Date:</strong> ${result.whois.creation_date || 'Unknown'}</p>
+        `;
+
+        // Email Configuration
+        document.getElementById('emailResults').innerHTML = `
+            <p><strong>MX Records:</strong> ${result.email_config.has_mx ? '✅ Configured' : '❌ Not configured'}</p>
+            <p><strong>SPF Record:</strong> ${result.email_config.spf ? '✅ Configured' : '❌ Not configured'}</p>
+            <p><strong>DMARC Record:</strong> ${result.email_config.dmarc ? '✅ Configured' : '❌ Not configured'}</p>
+            <p><strong>Properly Configured:</strong> ${result.email_config.configured_properly ? '✅ Yes' : '❌ No'}</p>
+        `;
+
+        // SSL Results
+        document.getElementById('sslResults').innerHTML = `
+            <p><strong>Has SSL:</strong> ${result.ssl.has_ssl ? '✅ Yes' : '❌ No'}</p>
+            ${result.ssl.has_ssl ? `
+                <p><strong>Valid From:</strong> ${result.ssl.valid_from}</p>
+                <p><strong>Valid To:</strong> ${result.ssl.valid_to}</p>
+                <p><strong>Days Remaining:</strong> ${result.ssl.days_remaining || 'N/A'}</p>
+            ` : ''}
+        `;
+
+        // Blacklist Results
+        const isListed = result.blacklist.listed;
+        document.getElementById('blacklistResults').innerHTML = `
+            <p class="${isListed ? 'text-danger' : 'text-success'}">
+                <strong>${isListed ? '⚠️ Domain is blacklisted' : '✅ Domain is not blacklisted'}</strong>
+            </p>
+            ${isListed ? `
+                <p><strong>Listed on:</strong></p>
+                <ul>
+                    ${result.blacklist.blacklists.map(bl => `<li>${bl}</li>`).join('')}
+                </ul>
+            ` : ''}
+            <p><strong>Clean on ${result.blacklist.clean.length} blacklists</strong></p>
+        `;
+
+        // Issues
+        if (result.issues && result.issues.length > 0) {
+            document.getElementById('issuesCard').style.display = 'block';
+            document.getElementById('issuesList').innerHTML = result.issues
+                .map(issue => `<li>${issue}</li>`)
+                .join('');
+        } else {
+            document.getElementById('issuesCard').style.display = 'none';
+        }
+
+    } catch (error) {
+        console.error('Error checking domain:', error);
+        loadingIndicator.style.display = 'none';
+        alert('Failed to check domain. Please try again.');
+    }
+});
+</script>
+{% endblock %}

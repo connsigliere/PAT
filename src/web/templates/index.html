@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Phishing Automation Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h1>
+
+        <!-- Legal Warning Alert -->
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Legal Notice:</strong> This tool is for <strong>AUTHORIZED</strong> penetration testing only.
+            Always obtain written permission before testing. Unauthorized use is illegal.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-white-50">Total Campaigns</h6>
+                        <h2 class="card-title mb-0" id="stat-campaigns">-</h2>
+                    </div>
+                    <i class="bi bi-bullseye stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-white-50">Active Campaigns</h6>
+                        <h2 class="card-title mb-0" id="stat-active">-</h2>
+                    </div>
+                    <i class="bi bi-play-circle stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-white-50">Emails Sent</h6>
+                        <h2 class="card-title mb-0" id="stat-sent">-</h2>
+                    </div>
+                    <i class="bi bi-envelope-check stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-white-50">Click Rate</h6>
+                        <h2 class="card-title mb-0" id="stat-clickrate">-</h2>
+                    </div>
+                    <i class="bi bi-cursor stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="/campaigns" class="btn btn-primary w-100 btn-lg">
+                            <i class="bi bi-plus-circle"></i> New Campaign
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/domain-checker" class="btn btn-info w-100 btn-lg">
+                            <i class="bi bi-search"></i> Check Domain
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/email-generator" class="btn btn-success w-100 btn-lg">
+                            <i class="bi bi-envelope-plus"></i> Generate Email
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/page-cloner" class="btn btn-warning w-100 btn-lg">
+                            <i class="bi bi-files"></i> Clone Page
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Campaigns -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Campaigns</h5>
+                <a href="/campaigns" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div id="recent-campaigns-loading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="recent-campaigns-table" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Campaign</th>
+                                    <th>Status</th>
+                                    <th>Template</th>
+                                    <th class="text-end">Targets</th>
+                                    <th class="text-end">Sent</th>
+                                    <th class="text-end">Opened</th>
+                                    <th class="text-end">Clicked</th>
+                                    <th class="text-end">Click Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-campaigns-body">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="recent-campaigns-empty" style="display: none;" class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-2">No campaigns yet. Create your first campaign to get started!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load dashboard statistics
+async function loadDashboardStats() {
+    try {
+        const response = await axios.get('/api/dashboard/stats');
+        const stats = response.data.stats;
+
+        document.getElementById('stat-campaigns').textContent = stats.total_campaigns;
+        document.getElementById('stat-active').textContent = stats.active_campaigns;
+        document.getElementById('stat-sent').textContent = stats.total_emails_sent.toLocaleString();
+        document.getElementById('stat-clickrate').textContent = stats.click_rate + '%';
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// Load recent campaigns
+async function loadRecentCampaigns() {
+    try {
+        const response = await axios.get('/api/campaigns');
+        const campaigns = response.data.campaigns;
+
+        const loading = document.getElementById('recent-campaigns-loading');
+        const table = document.getElementById('recent-campaigns-table');
+        const empty = document.getElementById('recent-campaigns-empty');
+        const tbody = document.getElementById('recent-campaigns-body');
+
+        loading.style.display = 'none';
+
+        if (campaigns.length === 0) {
+            empty.style.display = 'block';
+            return;
+        }
+
+        table.style.display = 'block';
+
+        // Show last 5 campaigns
+        const recent = campaigns.slice(0, 5);
+        tbody.innerHTML = recent.map(campaign => {
+            const clickRate = campaign.emails_sent > 0
+                ? ((campaign.links_clicked / campaign.emails_sent) * 100).toFixed(1)
+                : '0.0';
+
+            const statusBadge = {
+                'draft': 'secondary',
+                'active': 'success',
+                'paused': 'warning',
+                'completed': 'info'
+            }[campaign.status] || 'secondary';
+
+            return `
+                <tr>
+                    <td>
+                        <strong>${campaign.name}</strong><br>
+                        <small class="text-muted">${campaign.description}</small>
+                    </td>
+                    <td><span class="badge bg-${statusBadge}">${campaign.status}</span></td>
+                    <td><span class="badge bg-light text-dark">${campaign.template_type}</span></td>
+                    <td class="text-end">${campaign.targets_count}</td>
+                    <td class="text-end">${campaign.emails_sent}</td>
+                    <td class="text-end">${campaign.emails_opened}</td>
+                    <td class="text-end">${campaign.links_clicked}</td>
+                    <td class="text-end"><strong>${clickRate}%</strong></td>
+                </tr>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading campaigns:', error);
+        document.getElementById('recent-campaigns-loading').innerHTML =
+            '<div class="alert alert-danger">Failed to load campaigns</div>';
+    }
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+    loadRecentCampaigns();
+
+    // Auto-refresh every 30 seconds
+    setInterval(loadDashboardStats, 30000);
+    setInterval(loadRecentCampaigns, 30000);
+});
+</script>
+{% endblock %}

