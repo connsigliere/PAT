@@ -1,0 +1,88 @@
+# Phishing Automation Tool - Configuration File
+# Copy this file to config.yml and fill in your values
+
+# Database Configuration
+database:
+  type: "sqlite"  # sqlite, postgresql, mysql
+  host: "localhost"
+  port: 5432
+  name: "phishing_campaigns.db"
+  username: ""
+  password: ""
+
+# Email Server Configuration
+email:
+  smtp_host: "smtp.example.com"
+  smtp_port: 587
+  smtp_user: "your-email@example.com"
+  smtp_password: "your-password"
+  use_tls: true
+  from_name: "IT Support"
+  from_email: "support@example.com"
+
+  # Email warmup settings
+  warmup:
+    enabled: true
+    daily_limit: 50
+    increment_per_day: 10
+
+# Domain Configuration
+domain:
+  primary_domain: "example.com"
+  landing_page_port: 443
+  api_port: 8000
+
+# SSL/TLS Configuration
+ssl:
+  enabled: true
+  certbot_email: "admin@example.com"
+  auto_renew: true
+  certificate_path: "/etc/letsencrypt/live/"
+
+# Landing Page Configuration
+landing_pages:
+  storage_path: "./landing_pages"
+  clone_javascript: true
+  clone_css: true
+  capture_screenshots: true
+
+# Credential Harvesting
+harvesting:
+  encrypt_credentials: true
+  encryption_key_path: "./config/encryption.key"
+  notification_webhook: ""  # Discord/Slack webhook URL
+  log_path: "./logs/credentials.log"
+
+# Campaign Settings
+campaign:
+  max_concurrent: 5
+  default_timeout: 300  # seconds
+  track_clicks: true
+  track_submissions: true
+
+# Security Settings
+security:
+  api_key_required: true
+  api_key: "CHANGE-THIS-SECRET-KEY"
+  rate_limit: "100/hour"
+  allowed_ips: []  # Empty = allow all
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file_path: "./logs/app.log"
+  max_size: "100MB"
+  backup_count: 5
+
+# Legal & Compliance
+compliance:
+  require_authorization_token: true
+  log_all_actions: true
+  retention_days: 90
+
+# Third-party API Keys (for reputation checking)
+api_keys:
+  virustotal: ""
+  abuseipdb: ""
+  shodan: ""
+  urlscan: ""
