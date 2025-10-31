@@ -82,6 +82,33 @@ python start_web.py
 
 See [WEB_INTERFACE_GUIDE.md](WEB_INTERFACE_GUIDE.md) for detailed documentation.
 
+## 🔐 Security Features
+
+**NEW!** Comprehensive authentication and security:
+
+```bash
+# Setup security (first time)
+python setup_security.py
+
+# Start secure web server
+python start_web_secure.py
+
+# Access at: http://localhost:5000/login
+```
+
+**Security Features:**
+- 🔒 User authentication with bcrypt password hashing
+- 🔑 API key authentication for programmatic access
+- 🛡️ CSRF protection on all forms
+- ⏱️ Rate limiting on API endpoints
+- 📝 Comprehensive audit logging
+- 🔐 Secure session management
+- 🚫 Security headers (XSS, Clickjacking protection)
+- 👥 Role-based access control (User/Admin)
+- 📊 Admin dashboard with user management
+
+See [SECURITY_GUIDE.md](SECURITY_GUIDE.md) for complete security documentation.
+
 ## 🚀 Quick Start
 
 ### Option 1: Web Interface (Recommended)
