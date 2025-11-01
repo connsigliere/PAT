@@ -1,0 +1,54 @@
+# Docker Compose Configuration for Phishing Automation Tool
+
+version: '3.8'
+
+services:
+  # Main application
+  phishing-tool:
+    build: .
+    container_name: phishing-automation-tool
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+      - ./landing_pages:/app/landing_pages
+      - ./auth.db:/app/auth.db
+      - ./campaigns.db:/app/campaigns.db
+    environment:
+      - PYTHONUNBUFFERED=1
+      - FLASK_ENV=production
+    restart: unless-stopped
+    networks:
+      - phishing-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Nginx reverse proxy (optional, uncomment for production)
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: phishing-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - phishing-tool
+  #   restart: unless-stopped
+  #   networks:
+  #     - phishing-network
+
+networks:
+  phishing-network:
+    driver: bridge
+
+volumes:
+  logs:
+  config:
+  landing_pages:
